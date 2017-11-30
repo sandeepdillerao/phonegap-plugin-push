@@ -48,6 +48,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import android.content.pm.PackageManager;
+import android.os.AsyncTask;
+import android.provider.Settings;
+import java.net.HttpURLConnection;
+
 @SuppressLint("NewApi")
 public class FCMService extends FirebaseMessagingService implements PushConstants {
 
@@ -89,6 +94,9 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
 
     if (extras != null && isAvailableSender(from)) {
       Context applicationContext = getApplicationContext();
+
+      /*Send deliveryReport to UZED server*/
+      sendDeliveryReport(applicationContext, extras, "received");
 
       SharedPreferences prefs = applicationContext.getSharedPreferences(PushPlugin.COM_ADOBE_PHONEGAP_PUSH,
           Context.MODE_PRIVATE);
@@ -939,5 +947,68 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
     String savedSenderID = sharedPref.getString(SENDER_ID, "");
 
     return from.equals(savedSenderID) || from.startsWith("/topics/");
+  }
+
+  public static void sendDeliveryReport(Context context, Bundle extras, String status) {
+    if (extras != null) {
+      final String messageId = extras.getString("google.message_id");
+      Log.d("FCMService Data", extras.toString());
+      final String deliveryReportURL = extras.getString("delivery_report_url");
+      if(deliveryReportURL == null) return;
+      String uuid = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+      String versionCode = null;
+      try {
+        versionCode = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
+      } catch (PackageManager.NameNotFoundException e) {
+        e.printStackTrace();
+      }
+
+      final Uri uri = Uri.parse(deliveryReportURL).buildUpon()
+        .appendQueryParameter("status", status)
+        .appendQueryParameter("messageId", messageId)
+        .appendQueryParameter("uuid", uuid)
+        .appendQueryParameter("version", versionCode)
+        .build();
+
+      (new CallAPI()).execute(uri.toString());
+    }
+  }
+
+  public static class CallAPI extends AsyncTask<String,String,String> {
+    @Override
+    protected void onPreExecute() {
+      super.onPreExecute();
+    }
+    static String convertStreamToString(java.io.InputStream is) {
+      java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+      return s.hasNext() ? s.next() : "";
+    }
+    @Override
+    protected String doInBackground(String... params) {
+      try {
+        Thread.sleep((long) (10L*1000L*Math.random()));
+      } catch (InterruptedException e) {
+      }
+
+      String urlString = params[0]; // URL to call
+      String resultToDisplay = "";
+
+      InputStream in = null;
+      try {
+        URL url = new URL(urlString);
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        urlConnection.setRequestMethod("POST");
+        in = urlConnection.getInputStream();
+        resultToDisplay = convertStreamToString(in);
+        in.close();
+        urlConnection.disconnect();
+      } catch (Exception e) {
+        System.out.println(e.getMessage());
+        return e.getMessage();
+      }
+
+      return resultToDisplay;
+    }
+
   }
 }

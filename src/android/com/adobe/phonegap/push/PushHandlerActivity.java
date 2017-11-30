@@ -92,6 +92,7 @@ public class PushHandlerActivity extends Activity implements PushConstants {
             }
 
             PushPlugin.sendExtras(originalExtras);
+            FCMService.sendDeliveryReport(getApplicationContext(), originalExtras, "tapped");
         }
         return remoteInput == null;
     }
