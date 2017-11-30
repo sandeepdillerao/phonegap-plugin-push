@@ -123,7 +123,11 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
         Log.d(LOG_TAG, "background");
         extras.putBoolean(FOREGROUND, false);
         extras.putBoolean(COLDSTART, PushPlugin.isActive());
-
+        /*handle hotline notification*/
+        if(com.freshdesk.hotline.Hotline.isHotlineNotification(extras)){
+          com.freshdesk.hotline.Hotline.getInstance(applicationContext).handleGcmMessage(extras);
+          return;
+        }
         showNotificationIfPossible(applicationContext, extras);
       }
     }
