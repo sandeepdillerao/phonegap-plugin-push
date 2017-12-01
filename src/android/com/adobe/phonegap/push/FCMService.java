@@ -872,7 +872,11 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
     } else if (localIcon != null && !"".equals(localIcon)) {
       iconId = getImageId(resources, localIcon, packageName);
       Log.d(LOG_TAG, "using icon from plugin options");
+    }else if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP){
+      iconId = getImageId(resources, "notification_icon", packageName);
+      Log.d(LOG_TAG, "using icon notification icon for lollipop and later options");
     }
+
     if (iconId == 0) {
       Log.d(LOG_TAG, "no icon resource found - using application icon");
       iconId = context.getApplicationInfo().icon;
