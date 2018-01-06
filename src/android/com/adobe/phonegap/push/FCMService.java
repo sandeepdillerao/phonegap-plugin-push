@@ -80,6 +80,8 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
     Log.d(LOG_TAG, "onMessage - from: " + from);
 
     Bundle extras = new Bundle();
+    if(message.getMessageId())
+      extras.putString(MESSAGE_ID, message.getMessageId());
 
     if (message.getNotification() != null) {
       extras.putString(TITLE, message.getNotification().getTitle());
@@ -955,7 +957,7 @@ public class FCMService extends FirebaseMessagingService implements PushConstant
 
   public static void sendDeliveryReport(Context context, Bundle extras, String status) {
     if (extras != null) {
-      final String messageId = extras.getString("google.message_id");
+      final String messageId = extras.getString(MESSAGE_ID);
       Log.d("FCMService Data", extras.toString());
       final String deliveryReportURL = extras.getString("delivery_report_url");
       if(deliveryReportURL == null) return;
